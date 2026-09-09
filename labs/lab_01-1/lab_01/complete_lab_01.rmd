@@ -1,0 +1,138 @@
+---
+title: "lab_01"
+author: "Derek Willis, adapted by Aidan Hughes"
+date: "2026-08-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Turn off scientific notation
+options(scipen=999)
+```
+
+## About this lab
+
+To complete this lab, you need to: \* run existing code as directed (look for **Task**). \* modify existing code as directed (look for **Task**). \* write code in empty codeblocks provided to answer questions included (look for **Q**). \* write out the answer in the form of a complete sentence in the space given (look for **A**). When you are finished, commit changes and push to your personal GitHub repo, then submit the URL to this document on ELMS.
+
+Remember to add any new verbs or concepts to your reference notebook!
+
+## Load libraries and establish settings
+
+**Task** Run the codeblock below to load the Tidyverse. To run the codeblock, hit the little green play button in the upper right corner of the gray area (the codeblock) below.
+
+```{r}
+# Load the tidyverse. If you have not installed the tidyverse already, remove the # from the next line and run it first.  
+install.packages('tidyverse')
+library(tidyverse)
+```
+
+## Load Data
+
+We're going to load the slice of WinRed contribution data from West Virginia, which is in a file called `lab_01.rds`
+
+**Task** Using the example from the pre_lab, write code to load the RDS file and assign it to a good variable name.
+
+```{r}
+wv_winred_contributions <- read_rds("lab_01.rds")
+```
+
+## Examine Data
+
+**Task** Run the codeblock below to use glimpse to get a sense of the column names, types and sample data.
+
+```{r}
+# put the name of your data set, which you named in the last step, inside the () below
+glimpse(wv_winred_contributions)
+```
+
+
+**Q1** How many rows and columns does this dataframe have?
+
+
+**A1**
+Rows 40,441
+Columns 24
+
+## Answer questions
+
+**Q2** Which West Virginia city provided the largest number of contributions? How many?
+
+Hint: you'll need to use group_by() |> summarise() here. What column are we grouping by? Then, what should go inside the summarise() part? Then, rather than clicking through the 500+ cities to find the largest one, use the same function we used in our pre-lab to sort the data from largest number to the smallest.
+
+**A2**
+Charleston had the largest number of contributions at 3226
+```{r}
+wv_winred_contributions |>
+  group_by(city) |>
+  summarise(
+    count_contribs = n()
+  ) |>
+  arrange(desc(count_contribs))
+```
+
+**Q3** Which West Virginia cities accounted for the fewest contributions? You don't have to name all of them, but list a few. How many of those cities are there, roughly speaking?
+
+**A3**
+Some of the cities include Allen Junction, Breeden, Hometown... etc. There are roughly 60 cities that only count one contribution.
+```{r}
+wv_winred_contributions |>
+  group_by(city) |>
+  summarise(
+    count_contribs = n()
+  ) |>
+  arrange((count_contribs))
+```
+
+**Q4** What's your best educated guess to explain why the city identified in question 2 had more contributions compared to the cities identified in question 3? Hint: you won't find the answer in the data, you'll need to do some quick web research. You do not need to write any code for this question, so no codeblock is provided.
+
+**A4**
+Charleston has a much higher population than these bottommost cities, and is also a more politically divided area, which is why it has the most contributions
+
+**Q5** What recipient got the largest total amount of money? How many contributions did it receive? And what was the average donation it received?
+
+Hint: Since there three distinct questions here, you'll need to do multiple things inside summarise() this time.
+
+Hint 2: "aggregate_amount" is NOT the column you want to use here.
+
+**A5**
+TRUMP NATIONAL COMMITTEE JFC, INC. was the single recipient with the largest total amount of money. It recieved 14063 contributions with an average amount of $32.99
+
+```{r}
+wv_winred_contributions |>
+  group_by(memo_text) |>
+  summarise(
+    count_contribs = n(),
+    mean_amount = mean(amount)
+  ) |>
+  arrange(desc(count_contribs))
+
+```
+
+**Q6** What is that top recipient and what explains its popularity? Hint: this will require web research, you won't be able to answer this purely from the data set. You do not need to write any code for this question, so no codeblock is provided.
+
+**A6**
+Trump is the top recipient of funds. This is because WV is a historically red state. Due to liberal blocks in the more populous cities, republican voters may feel more pressure to contribute to a republican campaign.
+
+**BONUS POINTS (do this last / only if you have time at the end)** you might notice that a lot of the top recipient committees seem to be tied to the same person, and some even have nearly-identical committee names. What might be going on here? (You don't need to get this RIGHT, just give me an educated guess or two.)
+
+**Q7**. Using the answer from A5 as a starting point, produce a summary table that has the following information for each recipient: \* count of contributions \* total amount of all contributions \* the average contribution amount \* the median contribution amount \* the smallest contribution amount \* the largest contribution amount
+
+Store it as a variable object called `wv_summary` so that you can examine it with the data viewer. What newsworthy nuggets jump out at you that you could imagine dropping into a news story? Write a few summary sentences with overall findings.
+
+**A7**.
+The data viewer table shows that many of the top donations for West Virginia donors are for Republicans that are not participating in races within their state. Though certain popular republican candidates emerge (Ted Cruz, Mike Johnson, Marco Rubio), there are other strange groups, such as the Blackburn Tennessee Victory Fund recieving nearly $6000. Why is this the case?
+
+```{r}
+wv_summary <- wv_winred_contributions |>
+  group_by(memo_text) |>
+  summarise(
+    count_contribs = n(),
+    total_amount = sum(amount),
+    mean_amount = mean(amount),
+    median_amount = median(amount),
+    min_amount = min(amount),
+    max_amount = max(amount)
+  ) |>
+  arrange(desc(total_amount))
+```
