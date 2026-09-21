@@ -57,26 +57,41 @@ md_voters_2024 |>
 -lubridate mutate dates from data set from current format to a week format.
 -create a new dataset of this
 
--the week range would have been week 30 to week 32
--how many voters are there (a)
--filter for just these weeks
--how many rows of voters are there? (b)
--a-b That is your distribution
 ```{r}
-md_voters_2024|>
-  mutate(week = floor_date(COUNTY_REGISTRATION_DATE, "week")) |>
-  group_by(week = "2024-21-07")
+md_voters_2024 <- md_voters_2024|>
+  mutate(week_registered = week(STATE_REGISTRATION_DATE))
 ```
+
+```{r}
+new_voters_weekly <- md_voters_2024 |>
+  filter(STATE_REGISTRATION_DATE == COUNTY_REGISTRATION_DATE) |>
+  group_by(week_registered)|>
+  summarise(number_registered = n()) |>
+  arrange(desc(number_registered))
+
+new_voters_weekly
+```
+largest number of voters registered in week 24
 
 **Q3** Using lubridate, show which month saw the largest number of registrations. Does the answer help shed more light on Q2?
 **A3** 
-Week 32 saw the largest registration of voters, which is the week range immediately after Biden dropped out
+
+
 ```{r}
-md_voters_2024|>
-  mutate(week = floor_date(COUNTY_REGISTRATION_DATE, "week")) |>
-  group_by(week) |>
-  arrange(desc(week))
+md_voters_2024 <- md_voters_2024 |>
+  mutate(month_registered = month(STATE_REGISTRATION_DATE))
 ```
+
+```{r}
+monthly_registrations <-md_voters_2024 |>
+  filter(STATE_REGISTRATION_DATE == COUNTY_REGISTRATION_DATE) |>
+  group_by(month_registered)|>
+  summarise(number_registered = n()) |>
+  arrange(desc(number_registered))
+
+monthly_registrations
+```
+July had the most registrations
 
 **Q4** Maryland has, officially, five regions: https://www.visitmaryland.org/article/maryland-regions. Modify the original dataframe again to add a `region` column based on the `COUNTY` value using case_when. Are you going to have to do this for every Maryland county plus Baltimore City? Yes, you are.
 
@@ -85,8 +100,7 @@ Which regions and parties account for the most new voters?
 **A4** 
 
 ```{r}
-md_voters_2024|>
-  summarise(region)
+
 ```
 
 
@@ -95,9 +109,7 @@ md_voters_2024|>
 How many voters are in the new data set?
 
 ```{r}
-capital_or_western <- md_voters_2024 |>
-  filter( COUNTY == "Capital" | COUNTY == "Western")
-head(capital_or_western)
+capital_or_western <- md_voters_2024
 ```
 
 

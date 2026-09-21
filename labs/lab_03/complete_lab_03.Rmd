@@ -1,0 +1,270 @@
+---
+title: "lab_03"
+author: "Derek Willis, adapted by Aidan Hughes"
+date: "2024-08-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Load libraries and establish settings
+
+```{r}
+# Turn off scientific notation
+options(scipen=999)
+
+# Load the tidyverse
+library(tidyverse)
+
+# Load janitor
+library(janitor)
+```
+
+### Load data
+
+```{r}
+# Load MD slice of FEC House candidate contribution data
+md_contribs <- read_rds("data/lab_03.rds")
+```
+
+### Do this first: Fix header issues
+
+You'll need to fix one issue with the column names using janitor. Write a code block to do that, making sure that you save the results to the same dataframe.
+```{r}
+cleaned_contribs <- md_contribs |>
+  clean_names()
+
+cleaned_contribs
+```
+
+
+### **Q1**: Which seven cities in Maryland had the largest *number* of contributions from donors? How many did each have? To answer this question, you'll have to clean the messy "contributor_city" field.
+
+Note: To answer this question, you'll need to see every variation of the "contributor_city" for the top seven cities, which you should identify through some initial analysis. Then find variations of them and change those variations into the most common version.
+
+Hint: you should be starting out with a group_by and summarize just like we did in week 1 and 2. That'll help you identify the top seven names, and then you can click through the data to find variations of those names.
+
+Then, look back at Task 15 in Pre-Lab 3 for a clue about how to update specific values. Don't forget, you'll need a step at the end to ensure that everything aside from the values you're changing stay as the default value.
+
+**A1**:
+What I need to do:
+1. summarise different contributor_city into a desc list to find the top 7
+2. check for variations, change to fix the names 
+
+```{r}
+cleaned_contribs |>
+  group_by(contributor_city) |>
+  summarise(count_contribs = n()) |>
+  arrange(desc(count_contribs))
+
+```
+
+Top 7 cities are 
+1.Bethesda 2. Chevy Chase 3. Baltimore 4. Annapolis 5. Potomac 6. Silver Spring 7. Rockville
+
+Errors:
+Silver Springs, Anapolis, Balrimore, Blatimore, Potamic, Rockwell
+```{r}
+cleaned_contribs <- md_contribs |>
+clean_names() |> 
+  distinct() |>
+    mutate(contributor_city = str_to_title(contributor_city)) |>
+    mutate(contributor_city = case_when(
+      contributor_city == "Silver Springs" ~ "Silver Spring", 
+      contributor_city == "Anapolis" ~ "Annapolis",
+      contributor_city == "Balrimore" ~ "Baltimore",
+      contributor_city == "Blatimore" ~ "Baltimore",
+      contributor_city == "Potamic" ~ "Potomac",
+      contributor_city == "Rockwell" ~ "Rockville",
+    TRUE ~ contributor_city))
+
+cleaned_contribs |>
+  group_by(contributor_city) |>
+  summarise(count_contribs = n()) |>
+  arrange(desc(count_contribs))
+```
+
+```{r}
+glimpse(cleaned_contribs)
+```
+
+
+### **Q2:** Find the 5-digit ZIP code in Maryland that had the highest total amount of contributions (by dollar value).
+
+Where is that zip code and what kind of area is it, demographically? Which committee is the largest recipient of money from that zip code? How many of the top five recipients are Maryland candidates?
+
+Hint: You will need to use mutate and str_sub to ensure that you have a zip code column with the first five characters from the existing zip code column.
+
+Other functions you'll need afterwards are filter, group by, summarise, and arrange.
+
+Break this down into individual steps and check your work along the way. That'll make this question more manageable.
+
+**A2:**
+a)
+1. Shorten zipcode so that it is 5 character
+2. count_contrib based on the zipcodes and order by amount to answer first question
+
+
+b) 
+1. determine top zip code and demographics
+
+
+c)
+1. Determine the top committees (committee_name) contibuted to (contribution_reciept_amount) in that zip code
+2. Create new database for this one zipcode and arrange
+3. How many of top five recipients are MD candidates
+
+```{r}
+cleaned_contribs <- md_contribs |>
+  clean_names() |> 
+  distinct() |>
+  mutate(contributor_zip = str_sub(contributor_zip, start=1L, end=5L)) 
+
+cleaned_contribs
+```
+```{r}
+cleaned_contribs <- md_contribs |>
+  clean_names() |> 
+  distinct() |>
+  mutate(contributor_zip = str_sub(contributor_zip, start=1L, end=5L))|>
+  group_by(contributor_zip) |>
+  summarise(
+    count_contribs = n(),
+    total_amount = sum(contribution_receipt_amount)) |>
+  arrange(desc(total_amount))
+
+cleaned_contribs
+```
+
+```{r}
+zip_most <- cleaned_contribs |>
+  clean_names() |> 
+  distinct() |>
+  mutate(contributor_zip = str_sub(contributor_zip, start=1L, end=5L))|>
+group_by(committee_name)|>
+filter(contributor_zip == "20817") |>
+  summarise(
+     count_contribs = n(),
+    total_amount = sum(contribution_receipt_amount)) |>
+  arrange(desc(total_amount))
+
+zip_most
+```
+
+
+a) The Zip code with the highest amount of donations (in dollars) is the zip code 20817. 
+
+b) This 20817 zip code is in Bethesda, MD. Some demographic data pulled from the Census Bureau:
+  Race- 67.5% White, 6.4% Black, 12.8% Asian (alone), 9.6% Hispanic/Latino
+  Education- High School Grad or Higher- 98%, Bachelor's Degree or higher- 87.1%
+  Employment- Civilian Labor Force: M- 66.7%, F- 62.9% ; Persons in povert: 4.3%
+  Party Affiliation*- Republican- 15%, Democrat- 68%, Non-voting-
+*according to bestneighborhood.com.
+
+c) The top 5 committees are: 
+HELMER FOR CONGRESS - Virginia
+FRIENDS OF RAJA FOR CONGRESS- Illinois
+JAMIE RASKIN FOR CONGRESS- Maryland
+FRENCH HILL FOR ARKANSAS- Arkansas
+APRIL MCCLAIN DELANEY FOR CONGRESS- Maryland
+
+
+### **Q3:**
+
+Let's look at top individual donors. Write code to generate a list of top donors in each city, adding up the total amount of contributions. What does the original data say about the top two donors - who are they and what do they do? Do you see anything in the list of top 10 donors that would make you uncertain about the accuracy of these results?
+
+Hint: you'll need to put two columns in a group_by to answer this question. What are the two categories you're trying to group the data by? Look back at Task 8 in Pre-lab 1 if you need a reminder of how to do this.
+
+
+**A3:**
+
+a) Write code to generate a list of top donors in each city, adding up the total amount of contributions
+1. order by committee_name, by the top desc amount donated
+2. two things in the group by are name and city
+
+```{r}
+cleaned_contribs <- cleaned_contribs|>
+  clean_names() |> 
+    mutate(contributor_name = str_to_title(contributor_name))
+
+cleaned_contribs
+```
+
+```{r}
+cleaned_contribs |>
+  group_by(contributor_name, contributor_city) |>
+  summarise(
+    count_contribs = n(),
+    total_amount = sum(contribution_receipt_amount)) |>
+  arrange(desc(total_amount))
+
+cleaned_contribs
+```
+
+The top two overall donors are Melanie Jacobsen and Mark Jacobsen, and they both contributed to Bethesda.
+
+
+### **BONUS QUESTION**
+
+### **Q:** What's another problem you can identify in the data? How would it impact your ability to do an accurate analysis of something? (Three bonus points)
+
+**A:**
+
+An immediate concern is that Melanie Jacobsen and Mark Jacobsen obviously have the same last name, which could imply that they are operating as a shared household donation, but the contributor name could only list one of them. I was not able to find any information that suggested that either are political figures in MD.
+
+Another concern is that the filter I created above does not account for the fact that some people may live in and donate from different cities over the course of their life, which could lead to an innacurate count of the total donations of a person over their lifetime. 
+
+Something else to consider (that I don't have a way of really verifying) is that married women commonly change their names, but that doesn't erase their prior donation history, which could lead to a miscount. It seems that the file_id can tell me when a woman changes her name, but I don't know a quick way of combining all of these factors together.
+
+Last concern which I'll be addressing in my code is that I am seeing some names on here that seem to be the same person in different spellings or formats. Some examples being:
+1. Bill Pugh -> William Pugh; Bethesda
+2. Mark P. Jacobsen -> Mark Jacobsen
+3. Jeffery L. Drezner -> Jeffery Drezner
+
+Some names also include "Mr" in the name category, or middle initials, which, while I couldn't find an example via skimming, seems like a potential issue
+
+**The first thing I want to check is whether donations by the same person under different names are just a recount of the donations, or separate donations that should be merged with the individuals total lifetime donations**
+
+I am going to use the example of Allison Perry (Allison P Perry)  to confirm. Allison and AllisonP have both made 2 contributions totalling 6600 in Owings Mills. Using the R search function in cleaned_contribs, I can see that the back_reference_transaction_ids are different for each donation, as well as the elections they are marked for, so it seems safe to conclude that we are considering 4 total contributions.
+
+Knowing this, we can rename the matching names assured they will not count for duplicates. 
+
+
+
+```{r}
+cleaned_contribs <- cleaned_contribs |>
+  mutate(contributor_name = str_to_title(contributor_name))|>
+    mutate(contributor_name = case_when(
+    str_detect(contributor_name,"^Pugh, Bill") ~ "Pugh, William",
+    str_detect(contributor_name,"^Jacobsen, Mark P.") ~ "Jacobsen, Mark",
+    str_detect(contributor_name,"^Drezner, Jeffrey L.") ~ "Drezner, Jeffery",
+    str_detect(contributor_name,"^Perry, Allison P") ~ "Perry, Allison",
+    TRUE ~ contributor_name
+  ))
+  
+ cleaned_contribs
+
+  
+```
+
+Now I can check our previous list to see if the names updated
+```{r}
+cleaned_contribs |>
+  group_by(contributor_name, contributor_city) |>
+  summarise(
+    count_contribs = n(),
+    total_amount = sum(contribution_receipt_amount)) |>
+  arrange(desc(total_amount))
+
+cleaned_contribs
+```
+
+Doing this shows us that Mark Jacobsen is actually the top donor in Bethesda rather than Melanie Jacobsen.
+
+I do realize that this individual replacement method is probably the most inefficient way to do it.
+
+What I /wanted/ to do was find a way to get R to filter for names that included a Mr/Mrs or middle initial in the contributor_name. Then, I would have to find a way to remove that so that the name was in the same format as the rest. I think the way to do this might be possible in lubridate, but I was not able to figure it out. If that was the intended solution, could you let me know what I should have done?
+
+-Isabelle Berube
