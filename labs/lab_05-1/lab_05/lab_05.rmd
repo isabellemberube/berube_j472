@@ -41,6 +41,9 @@ view(harris_july_august)
 
 ```{r}
 # load the new voters data
+new_voters <- read.csv("data/new_voters.csv")
+
+view(new_voters)
 ```
 
 **Next join the Harris donations to the voter data. Remember, people's names are common, __so you'll want to use name columns and address information__. You'll need to figure out which columns to use from both dataframes.**
@@ -60,8 +63,17 @@ Note that you might get a "many to many" error when you run the code, depending 
 You'll want to minimize the amount of rows that this is happening to by picking smart join columns, but we probably won't eliminate it completely. We won't deal with that for the purpose of this lab, but it's important to be aware of.
 
 ```{r}
+cleaned_new_voters <- new_voters |>
+  
+  o0ikk
+```
+
+
+
+```{r}
 # join the combined Harris file to the new voters
 # you will need to determine what columns to use
+
 ```
 
 ## Answer questions
