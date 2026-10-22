@@ -135,4 +135,5 @@ wv_summary <- wv_winred_contributions |>
     max_amount = max(amount)
   ) |>
   arrange(desc(total_amount))
+wv_summary
 ```
