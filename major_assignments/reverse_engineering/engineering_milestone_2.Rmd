@@ -35,64 +35,28 @@ library(tidyverse)
 
 In this section, describe the source of the data, write a basic data dictionary for data you are working with, and discuss any caveats or issues you discovered working with this data. 
 
-Old info that relates to upcoming:
-When we first loaded in the data ( https://assets.bouldercounty.gov/wp-content/uploads/2023/11/Redacted-2023Coordinated-CVR.xlsx ; from https://bouldercounty.gov/elections/by-year/2023-election/), we found issues since the column names we needed were not the first row. So we went into the excel sheet and made it so that the first row had the column names CvrNumber, TabulatorNum, BatchId, RecordId, ImprintedId, BallotType; and then the names of each candidate (keeping the numbers in parentheses to represent the rankings 1-4 for mayoral candidates). We deleted the row with government position. We exported the adjusted file as a CSV to put in the data folder for the project.
-
-#THEN, WE UNDID THAT CODE and loaded the data into R AS IS to do that cleaning in R. Keeping the info here because it did help us visualize what we needed to do and it explains some of the things in the codeblocks.
-
-Side note: We also discovered from our first loading of data that the first data we used (the data linked in the story) was from 2026. It was on a webpage that updates with the latest voter data. We noticed that the candidate names in this story were not in there. So we found the 2023 Cast Vote Record (not linked in the story, linked above).
-
-We're not sure why many government positions (represented in column names) contain no data-- not zeros and ones, just blank cells all the way down.
-
+- When exported to CSV the top line auto-headers, therefore previous data line elimination was unnecessary. Also, errors in the CHATGPT product removed the top 3 lines of data, which is cause for a factual error. - IB
 
 ```{r}
-# Load the 2023 Boulder City Cast Vote Record data
 CVR <- read_csv("data/Redacted-2023Coordinated-CVR-OG.csv")
-```
-
-ChatGPT Convo: https://chatgpt.com/share/6acf19a2-e4e8-83ea-9d36-a6e0c904d797
-
-```{r}
-# Clean required data and prepare for analysis if needed.
 
 library(janitor)
+library(lubridate)
 
-# make what is currently row two become the column names and eliminate rows above (rows = row one and currently-column-name row)
-CVR <- row_to_names(CVR, row_number = 2)
+cleaned_CVR<- CVR |>
+  clean_names()
 
-# rename the now-empty column name cells based on position. Chose position instead of by name because R did not automatically assign the first column a name. It named the second column "NA.1", the third column "NA.2", and so on.
-
-names(CVR)[1] <- "cvr_number"
-names(CVR)[2] <- "tabulator_num"
-names(CVR)[3] <- "batch_ID"
-names(CVR)[4] <- "record_ID"
-names(CVR)[5] <- "imprinted_ID"
-names(CVR)[6] <- "ballot_type"
-
-# now get rid of another row not need -- first row 
-CVR <- CVR[-1, ]
-
-# Column names "Yes/For.7" and "No/Against.7" represent votes for and against City of Boulder Ballot Question 302 (a column name which used to exist but we removed it because of the format of voting for candidates), which was the question about "Safe Zones 4 Kids." We will need this data in one of the questions. Let's extract it and save it to its own dataframe before deleting excess columns in the CVR dataframe.
-
-# before select columns, why not rename them
-
-CVR <- CVR |>
-  rename(
-    yes_safe_zones = `Yes/For.7`,
-    no_safe_zones = `No/Against.7`
-  )
-
-# not sure why the above column name change is not working. Will return to it later.
-# still want to extract those columns and put them into their own dataframe before deleting them and other columns with names that are not candidate names (starting after Elizabeth Kearney)
-
-safe_zones <- CVR |>
-  select(`Yes/For.7`,`No/Against.7`)
-
-# As with previous code attempted, error says that `Yes/For.7` does not exist. Will return to this later.
-# Will hold off for now on making safe_zones dataframe and removing excess from CVR dataframe
-
+view(cleaned_CVR)
 ```
 
+
+
+
+
+
+```{r}
+
+```
 
 ## Sentences to Engineer
 In this notebook, we are reverse engineering five sentences from the story.
