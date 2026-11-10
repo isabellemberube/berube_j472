@@ -30,6 +30,7 @@ You CANNOT use AI in any other way for this lab, including how to write any nece
 library(tidyverse)
 library(janitor)
 library(lubridate)
+library(tidycensus)
 ```
 
 ## Questions
@@ -96,13 +97,59 @@ Your chart MUST:
 Tell me below why you picked the CSV you did. If you made any changes to the data, put that code below.
 
 **A2.** 
+I picked the CSV because I was really struggling to combine the gender csvs in a way that made sense. This one also worked well for a day by day analysis that was easy to read. 
+
+https://datawrapper.dwcdn.net/KadK5/1/
 
 ```{r}
+ev_totals_dem <- read.csv("data/ev_totals_dem.csv")|>
+view(ev_totals_dem)
+write.csv(ev_totals_dem)
+
 ```
+"","Day","Allegany","Anne.Arundel","Baltimore.City","Baltimore.County","Calvert","Caroline","Carroll","Cecil","Charles","Dorchester","Frederick","Garrett","Harford","Howard","Kent","Montgomery","Prince.George.s","Queen.Anne.s","Saint.Mary.s","Somerset","Talbot","Washington","Wicomico","Worcester"
+"1","Day1",257,5958,6538,9898,1213,248,1228,639,3062,352,2200,199,2885,5234,336,13811,18289,650,1103,179,698,935,1032,413
+"2","Day2",233,5578,5350,9043,982,187,1151,515,2979,295,2202,130,2481,4710,221,13436,16432,507,982,124,570,837,875,423
+"3","Day3",138,3480,3273,5852,554,79,683,273,2055,140,1697,58,1380,2874,112,8722,10180,215,480,70,223,574,475,143
+"4","Day4",112,3083,2955,5543,514,84,659,281,1567,117,1499,33,1211,2496,81,7919,8328,210,470,86,212,496,395,188
+"5","Day5",194,5434,5800,8573,837,159,1012,518,2854,249,2085,91,2211,3923,200,11840,16301,448,843,146,391,777,754,368
+"6","Day6",213,5412,5881,8990,739,148,1003,524,2728,227,2165,93,2143,3701,184,11586,15897,407,801,155,376,852,734,322
 
 **Q3.** After reading the recent CNN story about fundraising called "[How elderly dementia patients are unwittingly fueling political campaigns](https://www.cnn.com/interactive/2024/10/politics/political-fundraising-elderly-election-invs-dg/)," you decide to dig into the habits of Maryland political donors who give money via ActBlue and WinRed.
 
 You want to show Maryland's political geography - where those donors live - and the frequency of donations. To do that, you'll load in two CSV files: `md_winred_zip_totals.csv` and `md_actblue_zip_totals.csv`.
+
+```{r}
+md_winred_zip_totals <- read.csv("data/md_winred_zip_totals.csv") 
+md_actblue_zip_totals <-read.csv ("data/md_actblue_zip_totals.csv")
+
+```
+
+```{r} 
+md_actblue_zip_totals <-md_actblue_zip_totals |>
+  mutate(zip5 = str_sub(zip, 1, 5))
+
+md_actblue_zip_totals <- md_actblue_zip_totals |>
+ group_by(zip5) |>
+ arrange(desc(total))
+
+md_winred_zip_totals<-md_winred_zip_totals |>
+  mutate(zip5 = str_sub(zip, 1, 5))
+
+md_winred_zip_totals <- md_winred_zip_totals|>
+ group_by(zip5) |>
+ arrange(desc(total))
+
+####
+md_zipcodes <- get_acs(geography="zcta", variables = "P001001", state='MD', year=2019)
+
+md_zips_with_acs <- md_winred_zip_totals |>
+  left_join(md_zipcodes, join_by(zip5==GEOID))
+
+md_zips_with_acs <- md_actblue_zip_totals |>
+  left_join(md_zipcodes, join_by(zip5==GEOID))
+
+```
 
 You also will need to get population by zip code for Maryland - we did a similar thing in a previous lab, but this time you want the total population as your variable. Use tidycensus to do that, and save that dataframe, then join it to each of your contribution dataframes - you will need to make sure that the zip codes you're joining on are the same datatype.
 
