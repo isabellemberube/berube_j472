@@ -24,7 +24,7 @@ To do this, we'll need a new library -- [tidytext](https://cran.r-project.org/we
 **Task** Run the following code in the gray-colored codeblock below to load the libraries we'll use.
 
 ```{r}
-#install.packages("tidytext")
+install.packages("tidytext")
 library(tidyverse)
 library(tidytext)
 ```
@@ -34,6 +34,7 @@ For this lesson, we'll analyze excerpts from the 2024 Republican and Democratic 
 ### Task 2: Read in data
 
 **Task** Run the following code and describe the dataframe it outputs. **Answer**
+Super long entry containing excerpts from the Dem and Repub 2024 Party Speeches
 
 ```{r}
 platforms <- read_csv("data/platforms.csv")
@@ -59,6 +60,7 @@ Fortunately, this is a solved problem with tidytext, which has a function called
 ### Task 4: Trying out unnest_tokens
 
 **Task** Run the following code and describe the output of using the `unnest_tokens` function. **Answer**
+-individualizes the unique words with one word entered as data for each row
 
 ```{r}
 unique_words <- platforms |> select(text) |>
@@ -145,6 +147,8 @@ Then we can create top 10 lists for both of them and compare:
 ### Task 9: Create dataframes with the top 10 words in each platform
 
 **Task** Run the following code and describe the results. **Answer**
+Top words for Republicans are republicans, energy, border, illegal, inflation
+Top words for Democrats are border, Trump, energy, president, people
 
 ```{r}
 unique_words_rep |>
@@ -210,8 +214,10 @@ And we already have a different result -- "illegal aliens," "energy production" 
 
 ### Task 11: Create a dataframe with the top two-word phrases for the Democratic platform
 
-**Task** Run the following code and describe the results. **Answer**
-
+**Task** Run the following code and describe the results. 
+**Answer**
+Republican Top phrases: illegal aliens, republican party, energy production, president trump's, defeat inflation
+Democrat Top phrases: clean energy, donald trump, immigration system, president biden/biden's, affordable care
 ```{r}
 platforms |>
   filter(party == "Democratic") |>
@@ -237,7 +243,7 @@ Or..... we could have R tackle this.
 **Task** Run the following code.
 
 ```{r}
-install.packages("pacman") # comment this line out after you run it the first time
+#install.packages("pacman") # comment this line out after you run it the first time
 pacman::p_load_gh("trinker/textstem")
 library(textstem)
 ```
@@ -246,7 +252,9 @@ library(textstem)
 
 ### Task 13: Stemming vs. Lemmatization
 
-**Task** Run the following code and describe the differences between the two results. Which one might be more useful for the platform text? **Answer**
+**Task** Run the following code and describe the differences between the two results. Which one might be more useful for the platform text? 
+**Answer**
+Though lemmatization can cut to the meaning of a word, stemming might be preferred given that several political policy words can have a term in it that could apply to multiple meanings. I would have to get a better idea of lemmatize to understand the best choice.
 
 ```{r}
 dw <- c('driver', 'drive', 'drove', 'driven', 'drives', 'driving')
@@ -254,11 +262,13 @@ dw <- c('driver', 'drive', 'drove', 'driven', 'drives', 'driving')
 
 ```{r}
 stem_words(dw)
+# basically shortens common suffixes to single out root words
 ```
 
 
 ```{r}
-lemmatize_words(dw)
+lemmatize_words(dw)\
+#basically more intelligently shaves down a word to its meaning
 ```
 
 
@@ -295,8 +305,8 @@ unique_words_dem_stem |>
 
 
 ```{r}
-unique_words_dem_lemma <- lemmatize_words(unique_words_dem$word) |> as_tibble() |> rename(word = value)
-
+#unique_words_dem_lemma <- lemmatize_words(unique_words_dem$word) |> as_tibble() |> rename(word = value)
+#lines above were said to be unnecessary in class
 unique_words_dem_lemma |>
   anti_join(stop_words) |>
   group_by(word) |>
@@ -312,7 +322,7 @@ Another popular use of text analysis is to measure the sentiment of a word - whe
 
 ### Task 15: Load the bing lexicon and produce sentiments for both platforms
 
-**Task** Run the following code and describe the results. Do any of the sentiments seem incorrect or counter-intuitive? **Answer**
+**Task** Run the following code and describe the results. Do any of the sentiments seem incorrect or counter-intuitive? **Answer** takes the words and includes a column saying whether it typically has positive or negative connotation. Could be counterintuitive, as several words can have oxymoronic meanings based on context (i.e. : awfully talented,  terribly good, etc). Also, some names get registered as words, such as Trump, which is also a noun.
 
 ```{r}
 bing <- get_sentiments("bing")
